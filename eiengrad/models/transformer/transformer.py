@@ -9,7 +9,7 @@ import torch.nn.functional as F
 
 from eiengrad.models.transformer.multi_head_attention import MultiHeadAttention
 
-class InputEmbedding(nn.Module):
+class InputEmbeddings(nn.Module):
   def __init__(self, vocab_size: int, d_model: int) -> None:
     super().__init__()
     self.d_model = d_model
@@ -113,3 +113,24 @@ class ProjectionLayer(nn.Module):
     self.proj = nn.Linear(d_model, vocab_size)
   def forward(self, x):
     return self.proj(x)
+  
+class Transformer(nn.Module):
+  def __init__(self, encoder: Encoder, decoder: Decoder, src_embed: InputEmbeddings, tgt_embed: InputEmbeddings, src_pos: PositionalEncoding, tgt_pos: PositionalEncoding, projection_layer: ProjectionLayer) -> None:
+    super().__init__()
+    self.encoder = encoder
+    self.decoder = decoder
+    self.src_embed = src_embed
+    self.tgt_embed = tgt_embed
+    self.src_pos = src_pos
+    self.tgt_pos = tgt_pos
+    self.projection_layer = projection_layer
+  def encode(self, src: torch.Tensor, src_mask: torch.Tensor):
+    src = self.src_embed(src)
+    src = self.src_pos(src)
+    return self.encoder(src, src_mask)
+  def decode(self, encoder_output: torch.Tensor, src_mask: torch.Tensor, tgt: torch.Tensor, tgt_mask: torch.Tensor):
+    tgt = self.tgt_embed(tgt)
+    tgt = self.tgt_pos(tgt)
+    return self.decoder(tgt, encoder_output, src_mask, tgt_mask)
+  def project(self, x):
+    return self.projection_layer(x)
