@@ -75,3 +75,30 @@ def train_model(config, model):
       optimizer.zero_grad(set_to_none=True)
     run_validation(model, val_dataloader, tokenizer_src, tokenizer_tgt, config['seq_len'], device, lambda msg: batch_iterator.write(msg))
     torch.save({'epoch': epoch, 'model_state_dict': model.state_dict(), 'optimizer_state_dict': optimizer.state_dict()}, config['model_name'])
+    
+def run_validation(model, validation_ds, tokenizer_src, tokenizer_tgt, max_len, device, print_msg, num_examples=2):
+  model.eval()
+  count = 0
+  src_texts, expected, predicted = [], [], []
+  console_width = 80
+  with torch.no_grad():
+    for batch in validation_ds:
+      count += 1
+      encoder_input = batch['encoder_input'].to(device)
+      encoder_mask = batch['encoder_mask'].to(device)
+      assert encoder_input.size(0) == 1, "Batch size must be 1 for validation"
+      model_out = greedy_decode(model, encoder_input, encoder_mask, tokenizer_src, tokenizer_tgt, max_len, device)
+      src_text = batch['src_text'][0]
+      tgt_text = batch['tgt_text'][0]
+      model_out_text = tokenizer_tgt.decode(model_out.detach().cpu().numpy())
+      src_texts.append(src_text)
+      expected.append(tgt_text)
+      predicted.append(model_out_text)
+      print_msg('-'*console_width)
+      print_msg(f"{f'SOURCE: ':>12}{src_text}")
+      print_msg(f"{f'TARGET: ':>12}{tgt_text}")
+      print_msg(f"{f'PREDICTED: ':>12}{model_out_text}")
+      if count == num_examples:
+        print_msg('-'*console_width)
+        break
+      
