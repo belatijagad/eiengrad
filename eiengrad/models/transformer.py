@@ -41,3 +41,10 @@ class LayerNorm(nn.Module):
     std = x.std(dim=-1, keepdim=True)
     return self.alpha * (x - mean) / (std + self.eps) + self.bias
   
+class ResidualConnection(nn.Module):
+	def __init__(self, features=int, dropout_prob=float) -> None:
+		super().__init__()
+		self.dropout = nn.Dropout(p=dropout_prob)
+		self.norm = LayerNorm(features)
+	def forward(self, x):
+		return x + self.dropout(self.norm(x))
