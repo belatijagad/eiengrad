@@ -11,7 +11,7 @@ class TestMultiHeadAttention(unittest.TestCase):
     self.Ti = 48
     self.Tj = 32
     self.B = 2
-    self.mha = MultiHeadAttention(self.d_model, self.H, self.dropout_prob)
+    self.mha = MultiHeadAttention(d_model=self.d_model, num_heads=self.H, dropout_prob=self.dropout_prob)
   def test_self_attention(self):
     x = torch.rand(self.B, self.Ti, self.d_model)
     output = self.mha(x, x, x)
@@ -28,15 +28,16 @@ class TestMultiHeadAttention(unittest.TestCase):
     output = self.mha(x, y, y, mask)
     self.assertEqual(output.shape, (self.B, self.Ti, self.d_model))
     
-class TestAttentionFreeTransformer(unittest.TestCase):
+class TestAFTFull(unittest.TestCase):
   def setUp(self):
+    self.max_seqlen = 64
     self.d_model = 512
+    self.d_hidden = 128
     self.H = 8
-    self.dropout_prob = 0.1
     self.Ti = 48
     self.Tj = 32
     self.B = 2
-    self.aft = AttentionFreeTransformer(self.d_model, self.dropout_prob)
+    self.aft = AFTFull(d_model=self.d_model, max_seqlen=self.max_seqlen, d_hidden=self.d_hidden)
   def test_self_attention(self):
     x = torch.rand(self.B, self.Ti, self.d_model)
     output = self.aft(x, x, x)
