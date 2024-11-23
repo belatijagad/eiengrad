@@ -1,3 +1,7 @@
+"""
+  Reference:
+  - https://github.com/hkproj/pytorch-transformer/blob/main/model.py
+"""
 import math
 import torch
 import torch.nn as nn
@@ -6,13 +10,13 @@ import torch.nn.functional as F
 from eiengrad.models.transformer.multi_head_attention import MultiHeadAttention
 
 class InputEmbedding(nn.Module):
-	def __init__(self, vocab_size: int, d_model: int) -> None:
-		super().__init__()
-		self.d_model = d_model
-		self.corpus_size = vocab_size
-		self.embedding = nn.Embedding(num_embeddings=vocab_size, embedding_dim=d_model)
-	def forward(self, x):
-		return self.embedding(x) * math.sqrt(self.d_model)
+  def __init__(self, vocab_size: int, d_model: int) -> None:
+    super().__init__()
+    self.d_model = d_model
+    self.corpus_size = vocab_size
+    self.embedding = nn.Embedding(num_embeddings=vocab_size, embedding_dim=d_model)
+  def forward(self, x):
+	  return self.embedding(x) * math.sqrt(self.d_model)
 
 class PositionalEncoding(nn.Module):
 	def __init__(self, d_model: int, seq_len: int, dropout_prob: float) -> None:
@@ -62,6 +66,12 @@ class ResidualConnection(nn.Module):
 		return x + self.dropout(self.norm(x))
   
 class EncoderBlock(nn.Module):
-  def __init__(self, features: int, self_attention: MultiHeadAttention, feed_forward_block: FeedForwardBlock) -> None:
+  def __init__(self, features: int, self_attention_block: MultiHeadAttention, feed_forward_block: FeedForwardBlock, dropout_prob: float) -> None:
     super().__init__()
-    
+    self.self_attention_block = self_attention_block
+    self.feed_forward_block = self.feed_forward_block
+    self.residual_connections = nn.ModuleList([ResidualConnection(features, dropout_prob=dropout_prob) for _ in range(2)])
+  def forward(self, x, src_mask):
+    x = self.residual_connections(x)[0](x, lambda x: self.self_attention_block(x, x, x, src_mask))
+    x = self.residual_connections(x)[1](x, self.feed_forward_block)
+    return x
