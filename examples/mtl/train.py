@@ -102,3 +102,16 @@ def run_validation(model, validation_ds, tokenizer_src, tokenizer_tgt, max_len, 
         print_msg('-'*console_width)
         break
       
+def greedy_decode(model, src, src_mask, tokenizer_src, tokenizer_tgt, max_len, device):
+  sos_idx = tokenizer_tgt.token_to_id('[SOS]')
+  eos_idx = tokenizer_tgt.token_to_id('[EOS]')
+  encoder_output = model.encode(src, src_mask)
+  decoder_input = torch.empty(1, 1).fill_(sos_idx).type_as(src).to(device)
+  next_word = ''
+  while decoder_input.size(1) != max_len and next_word != eos_idx:
+    decoder_mask = causal_mask(decoder_input.size(1)).type_as(src).to(device)
+    out = model.decode(encoder_output, src_mask, decoder_input, decoder_mask)
+    prob = model.project(out[:, -1])
+    _, next_word = torch.max(prob, dim=1)
+    decoder_input = torch.cat([decoder_input, torch.empty(1, 1).type_as(src).fill_(next_word.item()).to(device)], dim=1)
+  return decoder_input.squeeze(0)
