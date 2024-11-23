@@ -17,6 +17,7 @@ setup(
 		'tqdm>=4.6',
 		'numpy>=2.1',
 		'datasets>=3.1',
-    'tokenizers>=0.2',
+		'tokenizers>=0.2',
+		'torchtext>=0.18',
 	], 
 )
