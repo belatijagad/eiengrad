@@ -41,6 +41,16 @@ class LayerNorm(nn.Module):
     std = x.std(dim=-1, keepdim=True)
     return self.alpha * (x - mean) / (std + self.eps) + self.bias
   
+class FeedForwardBlock(nn.Module):
+  def __init__(self, d_model: int, d_hidden: int, dropout_prob: float) -> None:
+    self.input = nn.Linear(in_features=d_model, out_features=d_hidden)
+    self.dropout = nn.Dropout(p=dropout_prob)
+    self.output = nn.Linear(in_features=d_hidden, out_features=d_model)
+  def forward(self, x):
+    x = F.relu(self.input(x))
+    x = self.dropout(x)
+    return self.output(x)
+  
 class ResidualConnection(nn.Module):
 	def __init__(self, features=int, dropout_prob=float) -> None:
 		super().__init__()
