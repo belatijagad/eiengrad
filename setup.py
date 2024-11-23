@@ -15,5 +15,6 @@ setup(
 	install_requires=[
 		'torch>=2.5',
 		'tqdm>=4.6',
+		'numpy>=2.1',
 	], 
 )

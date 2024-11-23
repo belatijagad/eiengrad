@@ -3,15 +3,28 @@ import unittest
 from eiengrad.models.transformer import *
 
 class TestMultiHeadAttention(unittest.TestCase):
-  def test_output_shape(self):
-    d_model = 512
-    num_heads = 8
-    dropout_prob = 0.1
-    seq_len = 10
-    batch_size = 2
-    
-    mha = MultiHeadAttention(d_model, num_heads, dropout_prob)
-    q, k, v = (torch.rand(batch_size, seq_len, d_model) for _ in range(3))
-    mask = torch.ones(batch_size, 1, seq_len, d_model)
-    output = mha(q, k, v, mask)
-    self.assertEquals(output.shape, [batch_size, seq_len, d_model])
+  def setUp(self):
+    self.d_model = 512
+    self.H = 8
+    self.dropout_prob = 0.1
+    self.Ti = 48
+    self.Tj = 32
+    self.B = 2
+  def test_self_attention(self):
+    mha = MultiHeadAttention(self.d_model, self.H, self.dropout_prob)
+    x = torch.rand(self.B, self.Ti, self.d_model)
+    output = mha(x, x, x)
+    self.assertEqual(output.shape, (self.B, self.Ti, self.d_model))
+  def test_masked_self_attention(self):
+    mha = MultiHeadAttention(self.d_model, self.H, self.dropout_prob)
+    x = torch.rand(self.B, self.Ti, self.d_model)
+    mask = torch.tril(torch.ones(self.Ti, self.Ti)).view(1, 1, self.Ti, self.Ti)
+    output = mha(x, x, x, mask)
+    self.assertEqual(output.shape, (self.B, self.Ti, self.d_model))
+  def test_cross_attention(self):
+    mha = MultiHeadAttention(self.d_model, self.H, self.dropout_prob)
+    x = torch.rand(self.B, self.Ti, self.d_model)
+    y = torch.rand(self.B, self.Tj, self.d_model)
+    mask = torch.tril(torch.ones(self.Ti, self.Tj)).view(1, 1, self.Ti, self.Tj)
+    output = mha(x, y, y, mask)
+    self.assertEqual(output.shape, (self.B, self.Ti, self.d_model))
